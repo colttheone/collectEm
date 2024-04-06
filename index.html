@@ -16,10 +16,20 @@
 </head>
 <body>
     <h1>Dino Jeep Adventure 🦖🚙</h1>
+    <div>
+        <button onclick="buyDinosaur('Tyrannosaurus Rex', 300)">Buy T-Rex</button>
+        <button onclick="buyDinosaur('Stegosaurus', 150)">Buy Stegosaurus</button>
+        <button onclick="buyDinosaur('Velociraptor', 200)">Buy Velociraptor</button>
+        <button onclick="buyDinosaur('Triceratops', 180)">Buy Triceratops</button>
+    </div>
+    <p>Money: $<span id="moneyDisplay">1000</span></p>
     <button id="startButton" onclick="startGame()">Start Adventure</button>
     <div id="output"></div>
 
     <script>
+        let money = 1000; // Starting money
+        let dinosaurs = [];
+        
         // Define Dinosaur class
         class Dinosaur {
             constructor(name, rarity, value, cost) {
@@ -27,6 +37,7 @@
                 this.rarity = rarity;
                 this.value = value;
                 this.cost = cost;
+                this.income = Math.floor(Math.random() * 50) + 20; // Random income between 20 and 70
             }
         }
 
@@ -42,6 +53,26 @@
             }
         }
 
+        // Function to buy a dinosaur
+        function buyDinosaur(name, cost) {
+            if (money >= cost) {
+                const rarity = Math.random() < 0.5 ? "Common" : "Rare";
+                const value = Math.floor(Math.random() * 50) + 50; // Random value between 50 and 100
+                const dino = new Dinosaur(name, rarity, value, cost);
+                dinosaurs.push(dino);
+                money -= cost;
+                updateMoneyDisplay();
+                output.innerHTML += `You bought a ${rarity} ${name} for $${cost} 💸<br>`;
+            } else {
+                output.innerHTML += "You don't have enough money to buy this dinosaur!<br>";
+            }
+        }
+
+        // Function to update money display
+        function updateMoneyDisplay() {
+            document.getElementById("moneyDisplay").textContent = money;
+        }
+
         // Function to generate a random event
         function getRandomEvent() {
             return Math.floor(Math.random() * 7) + 1; // Random number between 1 and 7
@@ -49,14 +80,6 @@
 
         // Function to simulate the game
         function playGame() {
-            let money = 1000; // Starting money
-            const dinosaurs = [
-                new Dinosaur("Tyrannosaurus Rex", "Rare", 100, 300),
-                new Dinosaur("Stegosaurus", "Common", 50, 150),
-                new Dinosaur("Velociraptor", "Rare", 80, 200),
-                new Dinosaur("Triceratops", "Common", 60, 180)
-            ];
-
             const jeeps = [
                 new Jeep("Safari Jeep", 200),
                 new Jeep("Explorer Jeep", 150),
@@ -70,39 +93,35 @@
             for (let round = 0; round < 7; round++) {
                 const event = getRandomEvent();
 
-                if (event === 1) { // Collect a dinosaur
-                    const dino = dinosaurs[Math.floor(Math.random() * dinosaurs.length)];
-                    output.innerHTML += `You found a ${dino.rarity} ${dino.name} 🦖<br>`;
-                    output.innerHTML += `Its value is ${dino.value} 💰<br>`;
-                    if (money >= dino.cost) {
-                        output.innerHTML += `You bought the ${dino.name} for ${dino.cost} 💸<br>`;
-                        money -= dino.cost;
-                    } else {
-                        output.innerHTML += "You don't have enough money to buy this dinosaur!<br>";
-                    }
-                } else if (event === 2) { // Collect a jeep
+                // Dinosaurs generate income
+                for (const dino of dinosaurs) {
+                    money += dino.income;
+                    output.innerHTML += `${dino.name} generated $${dino.income} income 💰<br>`;
+                }
+
+                if (event === 1) { // Collect a jeep
                     const jeep = jeeps[Math.floor(Math.random() * jeeps.length)];
                     output.innerHTML += `You found a ${jeep.name} 🚙<br>`;
                     output.innerHTML += `Its value is ${jeep.value} 💰<br>`;
                     jeep.increaseValue();
                     output.innerHTML += `Its value increased to ${jeep.value} 💹<br><br>`;
-                } else if (event === 3) { // Obtain a fake NFT
+                } else if (event === 2) { // Obtain a fake NFT
                     const fakeNFT = generateFakeNFT();
                     output.innerHTML += `You obtained a ${fakeNFT} 🎨<br><br>`;
-                } else if (event === 4) { // Earn money
+                } else if (event === 3) { // Earn money
                     const earnings = Math.floor(Math.random() * 200) + 100; // Random earnings between 100 and 300
                     money += earnings;
-                    output.innerHTML += `You earned ${earnings} 💰<br><br>`;
-                } else if (event === 5) { // Lose money
+                    output.innerHTML += `You earned $${earnings} 💰<br><br>`;
+                } else if (event === 4) { // Lose money
                     const loss = Math.floor(Math.random() * 200) + 100; // Random loss between 100 and 300
                     if (money >= loss) {
                         money -= loss;
-                        output.innerHTML += `You lost ${loss} 💸<br><br>`;
+                        output.innerHTML += `You lost $${loss} 💸<br><br>`;
                     } else {
                         output.innerHTML += "You lost all your money!<br><br>";
                         money = 0;
                     }
-                } else if (event === 6) { // Encounter a rare dinosaur
+                } else if (event === 5) { // Encounter a rare dinosaur
                     const rareDino = dinosaurs.find(dino => dino.rarity === "Rare");
                     output.innerHTML += `You encountered a rare ${rareDino.name} 🦖<br>`;
                     if (Math.random() < 0.5) {
@@ -110,12 +129,7 @@
                     } else {
                         output.innerHTML += `And you captured it! 💪<br>`;
                         output.innerHTML += `Its value is ${rareDino.value} 💰<br>`;
-                        if (money >= rareDino.cost) {
-                            output.innerHTML += `You bought the ${rareDino.name} for ${rareDino.cost} 💸<br>`;
-                            money -= rareDino.cost;
-                        } else {
-                            output.innerHTML += "You don't have enough money to buy this dinosaur!<br>";
-                        }
+                        money += rareDino.value;
                     }
                 } else { // No event
                     output.innerHTML += "Nothing interesting happened this round.<br><br>";
@@ -123,7 +137,8 @@
             }
 
             // Display final money
-            output.innerHTML += `Your final money: ${money} 💰`;
+            output.innerHTML += `Your final money: $${money} 💰`;
+            updateMoneyDisplay();
         }
 
         // Function to generate fake NFTs
